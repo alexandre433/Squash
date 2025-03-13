@@ -1,12 +1,8 @@
 <?php
 
-
 namespace Squash\Uuid;
 
-
 use Squash\Contract\UuidInterface;
-use Squash\Legacy;
-
 
 final class Uuid4 implements UuidInterface
 {

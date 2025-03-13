@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Squash;
 
 use Squash as LegacySquash;
@@ -36,22 +35,8 @@ use SquashConversionsByte;
 use SquashNumber;
 use stdClass;
 
-
 final class Squash
 {
-    private ConverterInterface $byteConverter;
-    private ConverterInterface $biByteConverter;
-    private RandomGeneratorInterface $randomGenerator;
-    private FileSystemInterface $fileSystem;
-    private UuidInterface $uuid;
-    private TimerInterface $timer;
-    private NumberFormatterInterface $numberFormatter;
-    private CalculatorInterface     $calculator;
-    private OllamaEndpointInterface $ollamaEndpoint;
-    public DiscordEndpointInterface $discordEndpoint;
-    public SortInterface $sort;
-    public LocaliseInterface $localise;
-
     public static function create(): Squash
     {
         return new Squash(
@@ -73,54 +58,40 @@ final class Squash
     public static function legacy(): Squash
     {
         $legacy = new Legacy(new LegacySquash());
-
         $byteConverter = new LegacyByteConverter(new SquashConversionsByte());
         $biByteConverter = new LegacyBiByteConverter(new SquashConversionsBiByte());
-
         $numberLegacy = new NumberLegacy(new SquashNumber());
 
         return new Squash(
-                $byteConverter,
-                $biByteConverter,
-                $legacy,
-                $legacy,
-                $legacy,
-                $legacy,
-                $numberLegacy,
-                $numberLegacy,
-                new OllamaEndpointController(),
-                new DiscordEndpointController(),
-                new SortController(),
-                new LocaliseController()
+            $byteConverter,
+            $biByteConverter,
+            $legacy,
+            $legacy,
+            $legacy,
+            $legacy,
+            $numberLegacy,
+            $numberLegacy,
+            new OllamaEndpointController(),
+            new DiscordEndpointController(),
+            new SortController(),
+            new LocaliseController()
         );
     }
 
     public function __construct(
-            ConverterInterface $byteConverter,
-            ConverterInterface $biByteConverter,
-            RandomGeneratorInterface $randomGenerator,
-            FileSystemInterface $fileSystem,
-            UuidInterface $uuid,
-            TimerInterface $timer,
-            NumberFormatterInterface $numberFormatter,
-            CalculatorInterface $calculator,
-            OllamaEndpointInterface $api,
-            DiscordEndpointInterface $discord,
-            SortInterface $sort,
-            LocaliseInterface $localise
+        private ConverterInterface $byteConverter,
+        private ConverterInterface $biByteConverter,
+        private RandomGeneratorInterface $randomGenerator,
+        private FileSystemInterface $fileSystem,
+        private UuidInterface $uuid,
+        private TimerInterface $timer,
+        private NumberFormatterInterface $numberFormatter,
+        private CalculatorInterface $calculator,
+        private OllamaEndpointInterface $ollamaEndpoint,
+        public DiscordEndpointInterface $discordEndpoint,
+        public SortInterface $sort,
+        public LocaliseInterface $localise
     ) {
-        $this->byteConverter = $byteConverter;
-        $this->biByteConverter = $biByteConverter;
-        $this->randomGenerator = $randomGenerator;
-        $this->fileSystem = $fileSystem;
-        $this->uuid = $uuid;
-        $this->timer = $timer;
-        $this->numberFormatter = $numberFormatter;
-        $this->calculator = $calculator;
-        $this->ollamaEndpoint = $api;
-        $this->discordEndpoint = $discord;
-        $this->sort = $sort;
-        $this->localise = $localise;
     }
 
     public function uuid(): string

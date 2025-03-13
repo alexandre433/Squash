@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Squash\Contract\Api;
 
 interface DiscordEndpointInterface

@@ -1,13 +1,11 @@
 <?php
 
-
 namespace Squash\Number;
 
 use InvalidArgumentException;
 use Squash\Contract\CalculatorInterface;
 use Squash\Contract\NumberFormatterInterface;
 use SquashNumber;
-
 
 final class Legacy implements NumberFormatterInterface, CalculatorInterface
 {
@@ -31,20 +29,15 @@ final class Legacy implements NumberFormatterInterface, CalculatorInterface
             throw new InvalidArgumentException('Argument count must be exactly three.');
         }
 
-        list($left, $operator, $right) = $arguments;
+        [$left, $operator, $right] = $arguments;
 
-        switch ($operator) {
-            case '+':
-                return $this->legacy->add($left, $right);
-            case '-':
-                return $this->legacy->subtract($left, $right);
-            case '*':
-                return $this->legacy->multiply($left, $right);
-            case '/':
-                return $this->legacy->divide($left, $right);
-            default:
-                throw new InvalidArgumentException('Unknown operator.');
-        }
+        return match ($operator) {
+            '+' => $this->legacy->add($left, $right),
+            '-' => $this->legacy->subtract($left, $right),
+            '*' => $this->legacy->multiply($left, $right),
+            '/' => $this->legacy->divide($left, $right),
+            default => throw new InvalidArgumentException('Unknown operator.'),
+        };
     }
 
     public function format(float $number): string

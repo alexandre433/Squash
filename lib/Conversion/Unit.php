@@ -1,18 +1,21 @@
 <?php
 
-
 namespace Squash\Conversion;
 
 use ReflectionClass;
 
-
 final class Unit
 {
     public const BYTE = 'b';
+
     public const KILOBYTE = 'kb';
+
     public const MEGABYTE = 'mb';
+
     public const GIGABYTE = 'gb';
+
     public const TERABYTE = 'tb';
+
     public const PETABYTE = 'pb';
 
     public int $value;

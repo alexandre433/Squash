@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Squash\Contract;
 
 interface FileSystemInterface

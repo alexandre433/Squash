@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Squash\Conversion;
-
 
 use OutOfRangeException;
 use Squash\Contract\ConverterInterface;
-
 
 abstract class Converter implements ConverterInterface
 {

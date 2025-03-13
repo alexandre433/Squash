@@ -9,43 +9,49 @@ use PHPUnit\Framework\TestCase;
 
 class FileSystemTest extends TestCase
 {
+    private const FILES_TEST_FILE = __DIR__ . '/files/test.txt';
+
+    private const FILES_NEW_FILE = __DIR__ . '/files/new-file.txt';
+
+    private const FILES_DIR = __DIR__ . '/files/';
+
     public static function setUpBeforeClass(): void
     {
-        mkdir(__DIR__ . '/files/');
+        mkdir(self::FILES_DIR);
     }
 
     public function setUp(): void
     {
-        file_put_contents(__DIR__ . '/files/test.txt', '123');
+        file_put_contents(self::FILES_TEST_FILE, '123');
     }
 
     public function tearDown(): void
     {
-        unlink(__DIR__ . '/files/test.txt');
-        if (is_file(__DIR__ . '/files/new-file.txt')) {
-            unlink(__DIR__ . '/files/new-file.txt');
+        unlink(self::FILES_TEST_FILE);
+        if (is_file(self::FILES_NEW_FILE)) {
+            unlink(self::FILES_NEW_FILE);
         }
     }
 
     public static function tearDownAfterClass(): void
     {
-        if (is_file(__DIR__ . '/files/test.txt')) {
-            unlink(__DIR__ . '/files/test.txt');
+        if (is_file(self::FILES_TEST_FILE)) {
+            unlink(self::FILES_TEST_FILE);
         }
 
-        rmdir(__DIR__ . '/files/');
+        rmdir(self::FILES_DIR);
     }
 
     public function testIsFileInDirectory(): void
     {
         $fs = new FileSystem();
-        $this->assertTrue($fs->isFileInDirectory(__DIR__ . '/files/', 'test.txt'));
+        $this->assertTrue($fs->isFileInDirectory(self::FILES_DIR, 'test.txt'));
     }
 
     public function testIsFileInDirectoryNoFile(): void
     {
         $fs = new FileSystem();
-        $this->assertFalse($fs->isFileInDirectory(__DIR__ . '/files/', 'no-file'));
+        $this->assertFalse($fs->isFileInDirectory(self::FILES_DIR, 'no-file'));
     }
 
     public function testIsFileInDirectoryNotAFile(): void
@@ -57,7 +63,7 @@ class FileSystemTest extends TestCase
     public function testListFilesInDirectory(): void
     {
         $fs = new FileSystem();
-        $list = $fs->listFilesInDirectory(__DIR__ . '/files');
+        $list = $fs->listFilesInDirectory(self::FILES_DIR);
 
         $files = explode(PHP_EOL, $list);
         foreach ($files as $file) {
@@ -68,25 +74,25 @@ class FileSystemTest extends TestCase
     public function testReplaceFile(): void
     {
         $fs = new FileSystem();
-        $fs->replaceFile(__DIR__ . '/files', 'new-file.txt', 'test.txt');
-        $this->assertFileEquals(__DIR__ . '/files/test.txt', __DIR__ . '/files/new-file.txt');
+        $fs->replaceFile(self::FILES_DIR, 'new-file.txt', 'test.txt');
+        $this->assertFileEquals(self::FILES_TEST_FILE, self::FILES_NEW_FILE);
     }
 
     public function testReplaceFileDestinationExists(): void
     {
-        file_put_contents(__DIR__ . '/files/new-file.txt', '321');
+        file_put_contents(self::FILES_NEW_FILE, '321');
 
         $fs = new FileSystem();
-        $fs->replaceFile(__DIR__ . '/files', 'new-file.txt', 'test.txt');
-        $this->assertFileEquals(__DIR__ . '/files/test.txt', __DIR__ . '/files/new-file.txt');
+        $fs->replaceFile(self::FILES_DIR, 'new-file.txt', 'test.txt');
+        $this->assertFileEquals(self::FILES_TEST_FILE, self::FILES_NEW_FILE);
     }
 
     public function testReplaceFileDestinationHasSameContent(): void
     {
-        file_put_contents(__DIR__ . '/files/new-file.txt', '123');
+        file_put_contents(self::FILES_NEW_FILE, '123');
 
         $fs = new FileSystem();
         $fs->replaceFile(__DIR__ . '/files', 'new-file.txt', 'test.txt');
-        $this->assertFileEquals(__DIR__ . '/files/test.txt', __DIR__ . '/files/new-file.txt');
+        $this->assertFileEquals(self::FILES_TEST_FILE, self::FILES_NEW_FILE);
     }
 }

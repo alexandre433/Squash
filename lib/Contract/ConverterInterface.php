@@ -1,10 +1,8 @@
 <?php
 
-
 namespace Squash\Contract;
 
 use Squash\Conversion\Unit;
-
 
 interface ConverterInterface
 {

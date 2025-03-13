@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Squash\Timer;
-
 
 use OutOfBoundsException;
 use Squash\Contract\TimerInterface;
-
 
 final class Milliseconds implements TimerInterface
 {

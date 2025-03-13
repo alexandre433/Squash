@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Squash\Contract\Api;
 
 use Squash\Contract\Api\Generate\Request;

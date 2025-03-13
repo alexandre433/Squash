@@ -1,10 +1,8 @@
 <?php
 
-
 namespace Squash\Number;
 
 use Squash\Contract\NumberFormatterInterface;
-
 
 /**
  * @codeCoverageIgnore No point in testing PHP function wraps.

@@ -1,11 +1,9 @@
 <?php
 
-
 namespace Squash\Random;
 
 use Exception;
 use Squash\Contract\RandomGeneratorInterface;
-
 
 final class Crypto implements RandomGeneratorInterface
 {

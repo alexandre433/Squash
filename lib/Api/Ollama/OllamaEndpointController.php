@@ -2,18 +2,35 @@
 
 namespace Squash\Api\Ollama;
 
-use DateTimeImmutable;
 use Squash\Contract\Api\Generate\Request;
 use Squash\Contract\Api\Generate\Response;
 use Squash\Contract\Api\OllamaEndpointInterface;
+use Squash\Exceptions\OllamaEndpointCurlException;
 
 final class OllamaEndpointController implements OllamaEndpointInterface
 {
+    public const APPLICATION_JSON_CONTENT_TYPE = 'Content-Type: application/json';
+
+    private function getDefinedCurlOptions(string $address, string|array $requestBody, string $requestMethod): array
+    {
+        return [
+            CURLOPT_URL            => $address,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => $requestMethod,
+            CURLOPT_POSTFIELDS     => json_encode($requestBody),
+            CURLOPT_HTTPHEADER     => [self::APPLICATION_JSON_CONTENT_TYPE],
+        ];
+    }
+
     /**
      * Will use the Ollama API to generate a response.
      *
      * @param Request $request
-     * @return object
+     * @return Response
      */
     public function generate(Request $request): Response
     {
@@ -21,24 +38,16 @@ final class OllamaEndpointController implements OllamaEndpointInterface
         $address = rtrim($request->address, '/');
         $requestBody = array_merge($request->toArray(), ['stream' => false]);
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/generate",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/generate",
+            $requestBody,
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
         return new Response(
             $responseBody['created_at'],
@@ -48,7 +57,7 @@ final class OllamaEndpointController implements OllamaEndpointInterface
             $responseBody['prompt_eval_duration'] ?? 0,
             $responseBody['eval_count'] ?? 0,
             $responseBody['eval_duration'] ?? 0,
-            $responseBody['context'] ?? array(),
+            $responseBody['context'] ?? [],
             $responseBody['response'] ?? '',
         );
     }
@@ -61,33 +70,24 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return bool Returns true if the model was successfully loaded, false otherwise.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function loadModel(string $model, string $address): bool
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
         $requestBody = ['model' => $model];
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/generate",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/generate",
+            $requestBody,
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
         return $responseBody['done'] ?? false;
     }
@@ -104,9 +104,8 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return object
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function chat(string $model, string $address, array $messages, ?string $format, ?array $options, ?string $keep_alive): Response
     {
         $handle = curl_init();
@@ -123,24 +122,17 @@ final class OllamaEndpointController implements OllamaEndpointInterface
             $requestBody['keep_alive'] = $keep_alive;
         }
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/chat",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/chat",
+            $requestBody,
+            'POST'
+        ));
+
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
         return new Response(
             $responseBody['created_at'],
@@ -150,7 +142,7 @@ final class OllamaEndpointController implements OllamaEndpointInterface
             $responseBody['prompt_eval_duration'] ?? 0,
             $responseBody['eval_count'] ?? 0,
             $responseBody['eval_duration'] ?? 0,
-            $responseBody['context'] ?? array(),
+            $responseBody['context'] ?? [],
             json_encode($responseBody['message']) ?? '',
         );
     }
@@ -164,43 +156,35 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return bool Returns true if the model was successfully created, false otherwise.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function createModel(string $address, string $name, ?string $modelfile, ?string $path): bool
     {
         $handle = curl_init();
-        $address = rtrim($path, '/');
-        $requestBody = array_merge([
+        $rTrimmedAddress = rtrim($path, '/');
+        $requestBody = [
             'name' => $name,
             'modelfile' => $modelfile,
             'stream' => false,
-        ]);
+        ];
 
         if ($path !== null) {
             $requestBody['path'] = $path;
         }
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/create",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$rTrimmedAddress/api/create",
+            $requestBody,
+            'POST'
+        ));
+
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
-        return $responseBody['status'] = 'success' ?? false;
+        return $responseBody['status'] == 'success' ?? false;
     }
 
     /**
@@ -210,31 +194,23 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return object Returns an object containing the list of models.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function listModels(string $address): object
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/tags",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/tags",
+            [],
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
         return $responseBody;
     }
@@ -247,34 +223,23 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return object Returns an object containing the model information.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function showModelInfo(string $address, string $model): object
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
-        $requestBody = array_merge([
-            'name' => $model
-        ]);
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/show",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        $requestBody = ['name' => $model];
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/show",
+            $requestBody,
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
         return $responseBody;
     }
@@ -288,31 +253,24 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return bool Returns true if the model was successfully copied (HTTP status code 200), false otherwise.
      *
-     * @throws \Exception If there is an error executing the cURL request.
+     * @throws OllamaEndpointCurlException the cURL request.
      */
-
     public function copyModel(string $address, string $source, string $destination): bool
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
-        $requestBody = array_merge([
-            "source" => $source,
-            "destination" => $destination
-        ]);
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/copy",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
-        $response = curl_exec($handle);
+        $requestBody = [
+            'source' => $source,
+            'destination' => $destination
+        ];
+
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/copy",
+            $requestBody,
+            'POST'
+        ));
+
+        curl_exec($handle);
         $httpCode = curl_getinfo($handle, CURLINFO_HTTP_CODE);
         curl_close($handle);
         return $httpCode == 200;
@@ -326,31 +284,19 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return bool Returns true if the model was successfully deleted (HTTP status code 200), false otherwise.
      *
-     * @throws \Exception If there is an error executing the cURL request.
+     * @throws OllamaEndpointCurlException the cURL request.
      */
-
     public function deleteModel(string $address, string $name): bool
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
-        $requestBody = array_merge([
-            "name" => $name
-        ]);
-        var_dump($requestBody);
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/delete",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "DELETE",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
-        $response = curl_exec($handle);
+        $requestBody = ["name" => $name];
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/delete",
+            $requestBody,
+            'DELETE'
+        ));
+        curl_exec($handle);
         $httpCode = curl_getinfo($handle, CURLINFO_HTTP_CODE);
         curl_close($handle);
         return $httpCode == 200;
@@ -365,42 +311,33 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return bool Returns true if the model was successfully pulled (status 'success'), false otherwise.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function pullModel(string $address, string $name, ?string $insecure): bool
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
-        $requestBody = array_merge([
+        $requestBody = [
             'name' => $name,
             'stream' => false
-        ]);
+        ];
 
         if ($insecure !== null) {
             $requestBody['insecure'] = $insecure;
         }
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/pull",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/pull",
+            $requestBody,
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
-        return $responseBody['status'] = 'success' ?? false;
+        return $responseBody['status'] == 'success' ?? false;
     }
 
     /**
@@ -412,42 +349,33 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return bool Returns true if the model was successfully pushed (status 'success'), false otherwise.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function pushModel(string $address, string $name, ?string $insecure): bool
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
-        $requestBody = array_merge([
+        $requestBody = [
             'name' => $name,
             'stream' => false
-        ]);
+        ];
 
         if ($insecure !== null) {
             $requestBody['insecure'] = $insecure;
         }
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/push",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/push",
+            $requestBody,
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
-        return $responseBody['status'] = 'success' ?? false;
+        return $responseBody['status'] == 'success' ?? false;
     }
 
     /**
@@ -461,17 +389,16 @@ final class OllamaEndpointController implements OllamaEndpointInterface
      *
      * @return object Returns an object containing the embeddings.
      *
-     * @throws \Exception If there is an error executing the cURL request or parsing the response.
+     * @throws OllamaEndpointCurlException parsing the response.
      */
-
     public function generateEmbeddings(string $address, string $model, string $prompt, ?array $options, ?string $keepAlive): object
     {
         $handle = curl_init();
         $address = rtrim($address, '/');
-        $requestBody = array_merge([
+        $requestBody = [
             'model' => $model,
             'prompt' => $prompt
-        ]);
+        ];
 
         if ($keepAlive !== null) {
             $requestBody['keep_alive'] = $keepAlive;
@@ -480,24 +407,16 @@ final class OllamaEndpointController implements OllamaEndpointInterface
             $requestBody['options'] = $options;
         }
 
-        curl_setopt_array($handle, [
-            CURLOPT_URL            => "{$address}/api/embeddings",
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => "POST",
-            CURLOPT_POSTFIELDS     => json_encode($requestBody),
-            CURLOPT_HTTPHEADER     => [
-                'Content-Type: application/json',
-            ],
-        ]);
+        curl_setopt_array($handle, $this->getDefinedCurlOptions(
+            "$address/api/embeddings",
+            $requestBody,
+            'POST'
+        ));
         $response = curl_exec($handle);
         curl_close($handle);
         $responseBody = json_decode($response, true);
         if ($responseBody === null) {
-            throw new \Exception('Failed to parse response from Ollama. CURL error: ' . curl_error($handle));
+            throw new OllamaEndpointCurlException(curl_error($handle));
         }
         return $responseBody;
     }

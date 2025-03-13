@@ -1,13 +1,11 @@
 <?php
 
-
 namespace Squash;
 
 use Squash\Contract\FileSystemInterface;
 use Squash\Contract\RandomGeneratorInterface;
 use Squash\Contract\TimerInterface;
 use Squash\Contract\UuidInterface;
-
 
 final class Legacy implements RandomGeneratorInterface, UuidInterface, FileSystemInterface, TimerInterface
 {

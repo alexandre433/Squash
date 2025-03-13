@@ -1,11 +1,9 @@
 <?php
 
-
 namespace Squash\Number;
 
 use InvalidArgumentException;
 use Squash\Contract\CalculatorInterface;
-
 
 final class Calculator implements CalculatorInterface
 {
@@ -15,19 +13,14 @@ final class Calculator implements CalculatorInterface
             throw new InvalidArgumentException('Argument count must be exactly three.');
         }
 
-        list($left, $operator, $right) = $arguments;
+        [$left, $operator, $right] = $arguments;
 
-        switch ($operator) {
-            case '+':
-                return $left + $right;
-            case '-':
-                return $left - $right;
-            case '*':
-                return $left * $right;
-            case '/':
-                return $left / $right;
-            default:
-                throw new InvalidArgumentException('Unknown operator.');
-        }
+        return match ($operator) {
+            '+' => $left + $right,
+            '-' => $left - $right,
+            '*' => $left * $right,
+            '/' => $left / $right,
+            default => throw new InvalidArgumentException('Unknown operator.')
+        };
     }
 }

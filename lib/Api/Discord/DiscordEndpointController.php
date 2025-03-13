@@ -3,6 +3,7 @@
 namespace Squash\Api\Discord;
 
 use Squash\Contract\Api\DiscordEndpointInterface;
+use Squash\Exceptions\DiscordEndpointCurlException;
 
 final class DiscordEndpointController implements DiscordEndpointInterface
 {
@@ -18,14 +19,14 @@ final class DiscordEndpointController implements DiscordEndpointInterface
      * @throws \Exception If there is an error executing the cURL request.
      */
 
-    public function sendWebhookMessage(string $message, string $webhookUrl, array $additionalData = null): void
+    public function sendWebhookMessage(string $message, string $webhookUrl, ?array $additionalData = null): void
     {
         $json_data = json_encode([
-            "content" => $message,
+            'content' => $message,
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         $ch = curl_init($webhookUrl);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-type: application/json']);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
@@ -35,7 +36,7 @@ final class DiscordEndpointController implements DiscordEndpointInterface
         $response = curl_exec($ch);
 
         if ($response === false) {
-            throw new \Exception('Curl error: ' . curl_error($ch));
+            throw new DiscordEndpointCurlException(curl_error($ch));
         }
 
         echo $response;

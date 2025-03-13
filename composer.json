@@ -3,7 +3,7 @@
     "description": "Squash your PHP code down!",
     "license": "AGPL-3.0-only",
     "require": {
-        "php": ">=7.4",
+        "php": ">=8.0",
         "ext-curl": "*",
         "ext-json": "*"
     },

@@ -57,7 +57,7 @@ final class SortController implements SortInterface
      *
      * @return array Returns the sorted array.
      */
-    function merge(array $arr): array
+    public function merge(array $arr): array
     {
         $n = count($arr);
         if ($n <= 1) {
@@ -95,16 +95,17 @@ final class SortController implements SortInterface
 
         return $result;
     }
-    
+
     /**
      * Sorts an array using the selection sort algorithm.
      *
      * @param array $arr The array to be sorted.
      * @return array The sorted array.
      */
-    public function selection(array $arr): array {
+    public function selection(array $arr): array
+    {
         $n = count($arr);
-        
+
         for ($i = 0; $i < $n - 1; $i++) {
             $minIndex = $i;
             for ($j = $i + 1; $j < $n; $j++) {
@@ -118,7 +119,7 @@ final class SortController implements SortInterface
                 $arr[$minIndex] = $temp;
             }
         }
-        
+
         return $arr;
     }
 
@@ -128,7 +129,8 @@ final class SortController implements SortInterface
      * @param array $arr The array to be sorted.
      * @return array The sorted array.
      */
-    public function heap(array $arr): array {
+    public function heap(array $arr): array
+    {
         $n = count($arr);
 
         // Build heap (rearrange array)
@@ -157,18 +159,21 @@ final class SortController implements SortInterface
      * @param int $n Size of heap.
      * @param int $i Index of the root of the subtree to be heapified.
      */
-    private function heapify(&$arr, $n, $i) {
+    private function heapify(array &$arr, int $n, int $i): void
+    {
         $largest = $i;  // Initialize largest as root
         $left = 2 * $i + 1;  // left = 2*i + 1
         $right = 2 * $i + 2;  // right = 2*i + 2
 
         // If left child is larger than root
-        if ($left < $n && $arr[$left] > $arr[$largest])
+        if ($left < $n && $arr[$left] > $arr[$largest]) {
             $largest = $left;
+        }
 
         // If right child is larger than largest so far
-        if ($right < $n && $arr[$right] > $arr[$largest])
+        if ($right < $n && $arr[$right] > $arr[$largest]) {
             $largest = $right;
+        }
 
         // If largest is not root
         if ($largest != $i) {
@@ -187,7 +192,8 @@ final class SortController implements SortInterface
      * @param array $arr The array to be sorted.
      * @return array The sorted array.
      */
-    public function radix(array $arr): array {
+    public function radix(array $arr): array
+    {
         $max = max($arr);
         $exp = 1;
         $n = count($arr);
@@ -225,7 +231,8 @@ final class SortController implements SortInterface
      * @param array $arr The array to be sorted.
      * @return array The sorted array.
      */
-    public function quick(array $arr): array {
+    public function quick(array $arr): array
+    {
         $n = count($arr);
         if ($n <= 1) {
             return $arr;

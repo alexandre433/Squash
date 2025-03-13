@@ -1,10 +1,8 @@
 <?php
 
-
 namespace Squash\FileSystem;
 
 use Squash\Contract\FileSystemInterface;
-
 
 final class FileSystem implements FileSystemInterface
 {
